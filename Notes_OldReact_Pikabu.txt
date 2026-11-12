@@ -407,7 +407,7 @@
         btn.id = 'custom-settings-btn';
         btn.innerHTML = '⚙️';
         btn.title = 'Настройки цветов Notes_OldReact_Pikabu';
-        btn.style.cssText = `position: fixed; bottom: 60px; right: 20px; background: #1e1e1e; border: 1px solid #444; color: #fff; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; z-index: 99990; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: 0.2s;`;
+        btn.style.cssText = `position: fixed; bottom: 80px; right: 20px; background: #1e1e1e; border: 1px solid #444; color: #fff; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 20px; z-index: 99990; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: 0.2s;`;
         btn.onmouseenter = () => btn.style.background = '#333';
         btn.onmouseleave = () => btn.style.background = '#1e1e1e';
         btn.onclick = openGlobalSettings;
