@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      1.0
 // @description  Возвращает старые реакции на Пикабу (елка -> какашка, череп -> клоун, голубь -> петух)
-// @author       You
+// @author       Strelok13
 // @match        *://pikabu.ru/*
 // @run-at       document-start
 // ==/UserScript==
