@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      1.8
 // @description  Комплексный инструмент: личные заметки, цветовые маркеры и возврат старых реакций (ёлка/череп/голубь)
-// @author       You
+// @author       Strelok13
 // @match        *://pikabu.ru/*
 // @grant        GM_getValue
 // @grant        GM_setValue
