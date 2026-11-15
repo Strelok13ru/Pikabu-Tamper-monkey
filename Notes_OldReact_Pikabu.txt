@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Notes_OldReact_Pikabu
 // @namespace    http://tampermonkey.net/
-// @version      1.8
+// @version      1.9
 // @description  Комплексный инструмент: личные заметки, цветовые маркеры и возврат старых реакций (ёлка/череп/голубь)
 // @author       Strelok13
 // @match        *://pikabu.ru/*
@@ -32,8 +32,8 @@
     };
 
     const COLORS = {
-        'red': '#e74c3c', 'orange': '#e67e22', 'yellow': '#f1c40f', 'green': '#2ecc71', 
-        'blue': '#3498db', 'purple': '#9b59b6', 'pink': '#fd79a8', 'cyan': '#00cec9', 
+        'red': '#e74c3c', 'orange': '#e67e22', 'yellow': '#f1c40f', 'green': '#2ecc71',
+        'blue': '#3498db', 'purple': '#9b59b6', 'pink': '#fd79a8', 'cyan': '#00cec9',
         'brown': '#d35400', 'gray': '#95a5a6'
     };
 
@@ -142,7 +142,7 @@
 
         const linksContainer = document.createElement('div');
         linksContainer.style.cssText = 'max-height: 120px; overflow-y: auto; margin-bottom: 10px; border: 1px solid #333; border-radius: 4px; padding: 5px; background: #181818;';
-        
+
         const renderLinks = () => {
             linksContainer.innerHTML = '';
             if (userData.links.length === 0) {
@@ -152,17 +152,17 @@
             userData.links.forEach((linkObj, index) => {
                 const linkRow = document.createElement('div');
                 linkRow.style.cssText = 'display: flex; justify-content: space-between; align-items: flex-start; font-size: 12px; margin-bottom: 6px; background: #2a2a2a; padding: 6px; border-radius: 3px; border-left: 2px solid #3498db;';
-                
+
                 const textWrap = document.createElement('div');
                 textWrap.style.cssText = 'display: flex; flex-direction: column; overflow: hidden; max-width: 290px;';
-                
+
                 const a = document.createElement('a');
                 a.href = linkObj.url;
                 a.target = '_blank';
                 a.textContent = linkObj.url;
                 a.style.cssText = 'color: #3498db; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
                 textWrap.appendChild(a);
-                
+
                 if (linkObj.desc) {
                     const descSpan = document.createElement('span');
                     descSpan.textContent = linkObj.desc;
@@ -174,7 +174,7 @@
                 delBtn.textContent = '✖';
                 delBtn.style.cssText = 'background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 14px; padding: 0 5px; margin-left: 5px;';
                 delBtn.onclick = () => { userData.links.splice(index, 1); renderLinks(); };
-                
+
                 linkRow.appendChild(textWrap);
                 linkRow.appendChild(delBtn);
                 linksContainer.appendChild(linkRow);
@@ -185,7 +185,7 @@
 
         const linkInputWrap = document.createElement('div');
         linkInputWrap.style.cssText = 'display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px; background: #252525; padding: 10px; border-radius: 4px;';
-        
+
         const linkUrlInput = document.createElement('input');
         linkUrlInput.type = 'text';
         linkUrlInput.placeholder = 'Ссылка (https://pikabu.ru/story/...)';
@@ -195,11 +195,11 @@
         linkDescInput.type = 'text';
         linkDescInput.placeholder = 'Описание (например: пост со спамом)';
         linkDescInput.style.cssText = 'width: 100%; padding: 5px; border: 1px solid #444; border-radius: 4px; background: #1e1e1e; color: #fff; font-size: 12px; box-sizing: border-box;';
-        
+
         const addLinkBtn = document.createElement('button');
         addLinkBtn.textContent = 'Добавить ссылку в список';
         addLinkBtn.style.cssText = 'width: 100%; padding: 6px; cursor: pointer; background: #3498db; color: white; border: none; border-radius: 4px; font-size: 12px; font-weight: bold;';
-        
+
         const doAddLink = () => {
             const url = linkUrlInput.value.trim();
             const desc = linkDescInput.value.trim();
@@ -213,7 +213,7 @@
 
         addLinkBtn.onclick = doAddLink;
         linkDescInput.onkeypress = (e) => { if (e.key === 'Enter') doAddLink(); };
-        
+
         linkInputWrap.appendChild(linkUrlInput);
         linkInputWrap.appendChild(linkDescInput);
         linkInputWrap.appendChild(addLinkBtn);
@@ -221,12 +221,12 @@
 
         const actionWrap = document.createElement('div');
         actionWrap.style.cssText = 'display: flex; justify-content: flex-end; gap: 10px;';
-        
+
         const cancelBtn = document.createElement('button');
         cancelBtn.textContent = 'Отмена';
         cancelBtn.style.cssText = 'padding: 5px 15px; cursor: pointer; background: #444; color: white; border: none; border-radius: 4px;';
         cancelBtn.onclick = () => { modal.remove(); overlay.remove(); };
-        
+
         const saveBtn = document.createElement('button');
         saveBtn.textContent = 'Сохранить заметку';
         saveBtn.style.cssText = 'padding: 5px 15px; cursor: pointer; background: #2ecc71; color: white; border: none; border-radius: 4px; font-weight: bold;';
@@ -237,7 +237,7 @@
             updateAllMarkers();
             modal.remove(); overlay.remove();
         };
-        
+
         actionWrap.appendChild(cancelBtn);
         actionWrap.appendChild(saveBtn);
         modal.appendChild(actionWrap);
@@ -246,7 +246,7 @@
         overlay.id = 'custom-note-overlay';
         overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 99998;';
         overlay.onclick = () => { modal.remove(); overlay.remove(); };
-        
+
         document.body.appendChild(overlay);
         document.body.appendChild(modal);
     }
@@ -268,7 +268,7 @@
 
         const descWrap = document.createElement('div');
         descWrap.style.cssText = 'max-height: 300px; overflow-y: auto; margin-bottom: 15px;';
-        
+
         Object.keys(COLORS).forEach(c => {
             const row = document.createElement('div');
             row.style.cssText = 'display: flex; align-items: center; gap: 10px; margin-bottom: 8px;';
@@ -304,7 +304,7 @@
         overlay.id = 'custom-settings-overlay';
         overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 99998;';
         overlay.onclick = () => { modal.remove(); overlay.remove(); };
-        
+
         document.body.appendChild(overlay);
         document.body.appendChild(modal);
     }
@@ -314,7 +314,7 @@
         const marker = document.createElement('span');
         marker.className = 'custom-user-marker';
         marker.style.cssText = 'display: inline-flex; align-items: center; justify-content: flex-start; gap: 2px; cursor: pointer; margin: 0 4px; vertical-align: middle; padding: 2px; transition: all 0.2s; border-radius: 4px;';
-        
+
         const hasColors = userData.colors && userData.colors.length > 0;
         const hasNotes = userData.notes && userData.notes.trim().length > 0;
 
@@ -329,7 +329,7 @@
                 userData.colors.forEach(c => {
                     const dot = document.createElement('span');
                     dot.style.cssText = `display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${COLORS[c]}; box-shadow: 0 0 2px rgba(0,0,0,0.5);`;
-                    dot.title = colorDescs[c] ? colorDescs[c] : c; 
+                    dot.title = colorDescs[c] ? colorDescs[c] : c;
                     marker.appendChild(dot);
                 });
             } else if (hasNotes) {
@@ -355,6 +355,10 @@
     }
 
     function updateAllMarkers() {
+        // 1. Очищаем страницу от всех старых маркеров
+        document.querySelectorAll('.custom-user-marker').forEach(el => el.remove());
+
+        // 2. Комментарии
         document.querySelectorAll('.comment__user').forEach(el => {
             let username = el.getAttribute('data-name');
             const nickEl = el.querySelector('.user__nick');
@@ -363,20 +367,17 @@
                 if (href && href.includes('/@')) username = href.split('@')[1].split('?')[0];
             }
             if (!username || username === 'DELETED' || username === 'Аноним') return;
-            
+
             if (nickEl) {
-                if (!nickEl.nextElementSibling?.classList.contains('custom-user-marker')) {
-                    const marker = createMarker(username);
-                    if (marker) { nickEl.after(marker); }
-                }
+                const marker = createMarker(username);
+                if (marker) { nickEl.after(marker); }
             } else {
-                if (!el.lastElementChild?.classList.contains('custom-user-marker')) {
-                     const marker = createMarker(username);
-                     if (marker) { el.appendChild(marker); }
-                }
+                const marker = createMarker(username);
+                if (marker) { el.appendChild(marker); }
             }
         });
 
+        // 3. Посты
         document.querySelectorAll('.story__user-link, .story__author').forEach(el => {
             let username = el.getAttribute('data-name');
             if (!username) {
@@ -385,16 +386,15 @@
             }
             if (!username || username === 'DELETED' || username === 'Аноним') return;
 
-            if (!el.nextElementSibling?.classList.contains('custom-user-marker')) {
-                const marker = createMarker(username);
-                if (marker) { el.after(marker); }
-            }
+            const marker = createMarker(username);
+            if (marker) { el.after(marker); }
         });
-        
+
+        // 4. Страница профиля
         const profileHeader = document.querySelector('.profile__nick');
         if (profileHeader) {
              let username = window.location.href.split('@')[1]?.split('/')[0]?.split('?')[0];
-             if (username && !profileHeader.nextElementSibling?.classList.contains('custom-user-marker')) {
+             if (username) {
                  const marker = createMarker(username);
                  if (marker) { profileHeader.after(marker); }
              }
@@ -422,7 +422,7 @@
         let shouldUpdate = false;
         for (const mutation of mutations) {
             for (const node of mutation.addedNodes) {
-                if (node.nodeType === 1) { 
+                if (node.nodeType === 1) {
                     if (node.classList.contains('comment__header') || node.classList.contains('story') || node.classList.contains('comment')) {
                         shouldUpdate = true;
                         break;
@@ -431,7 +431,7 @@
             }
             if (shouldUpdate) break;
         }
-        if (shouldUpdate) setTimeout(updateAllMarkers, 200); 
+        if (shouldUpdate) setTimeout(updateAllMarkers, 200);
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
