@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Notes_OldReact_Pikabu
 // @namespace    http://tampermonkey.net/
-// @version      1.9
+// @version      1.9.3
 // @description  Комплексный инструмент: личные заметки, цветовые маркеры и возврат старых реакций (ёлка/череп/голубь)
 // @author       Strelok13
 // @match        *://pikabu.ru/*
@@ -10,18 +10,9 @@
 // @run-at       document-idle
 // ==/UserScript==
 
-/*
- * ФУНКЦИОНАЛ СКРИПТА:
- * 1. Заметки и маркеры: Позволяет ставить до 5 цветовых маркеров пользователю, писать текст и прикреплять ссылки с описаниями.
- * 2. Глобальные настройки: Кнопка ⚙️ в углу экрана для настройки значений цветов (подсказки при наведении).
- * 3. Старые реакции: Заменяет новые SVG-иконки на классические (елка -> какашка, череп -> клоун, голубь -> петух) через Base64.
- * 4. Хранение: Все данные сохраняются локально в менеджере скриптов.
- */
-
 (function() {
     'use strict';
 
-    // База Base64-изображений для замены реакций
     const BASE64_ASSETS = {
         poop_m: "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+CiAgPHBhdGggZD0iTTEzLjEyMyAzLjg0Yy40NiAxLjgxMi0uOTI3IDIuMzI1LTEuOTE1IDIuMzc3aC0uMzMyYy0xLjg2MiAwLTMuMzcyIDEuNDktMy4zNzIgMy4zMjd2LjAzYy0xLjMxLjQ1Ny0yLjI0OCAxLjY5LTIuMjQ4IDMuMTM5IDAgLjM2My4wNi43MTIuMTY4IDEuMDRhMy4zMjkgMy4zMjkgMCAwIDAtMi4wOTQgMy4wOGMwIDEuODM3IDEuNTEgMy4zMjcgMy4zNzEgMy4zMjdoMTAuNTk3YzEuODYyIDAgMy4zNzItMS40OSAzLjM3Mi0zLjMyOGEzLjMyOSAzLjMyOSAwIDAgMC0yLjA5NS0zLjA4Yy4xMS0uMzI3LjE2OC0uNjc2LjE2OC0xLjA0IDAtMS41NjQtMS4wOTUtMi44NzctMi41Ny0zLjIzMiAwLS4wMzMtLjAwMS0uMDY3LS4wMDMtLjEuNjg3LTEuOTgzLS41OTktNC45NzItMy4wNDctNS41NFoiIGZpbGw9IiNBNTVENDkiPjwvcGF0aD4KICA8cGF0aCBkPSJNOS44MzIgOS44MjRjLjg5NyAwIDEuNjI1LjczIDEuNjI1IDEuNjMydjEuMDg4YzAgLjkwMS0uNzI4IDEuNjMyLTEuNjI1IDEuNjMyLS44OTggMC0xLjYyNi0uNzMtMS42MjYtMS42MzJ2LTEuMDg4YzAtLjkwMi43MjgtMS42MzIgMS42MjYtMS42MzJaIiBmaWxsPSIjZmZmIj48L3BhdGg+CiAgPHBhdGggZD0iTTkuODMyIDEwLjY0Yy40NDkgMCAuODEzLjM4NC44MTMuODU3djEuMDA3YzAgLjQ3My0uMzY0Ljg1Ni0uODEzLjg1Ni0uNDUgMC0uODEzLS4zODMtLjgxMy0uODU2di0xLjAwN2MwLS40NzMuMzY0LS44NTcuODEzLS44NTdaIiBmaWxsPSIjNEYxMTBGIj48L3BhdGg+CiAgPHBhdGggZD0iTTE0LjE2NiA5LjgyNGMuODk4IDAgMS42MjYuNzMgMS42MjYgMS42MzJ2MS4wODhjMCAuOTAxLS43MjggMS42MzItMS42MjYgMS42MzItLjg5OCAwLTEuNjI2LS43My0xLjYyNi0xLjYzMnYtMS4wODhjMC0uOTAyLjcyOC0xLjYzMiAxLjYyNi0xLjYzMloiIGZpbGw9IiNmZmYiPjwvcGF0aD4KICA8cGF0aCBkPSJNMTQuMTY2IDEwLjY0Yy40NSAwIC44MTMuMzg0LjgxMy44NTd2MS4wMDdjMCAuNDczLS4zNjQuODU2LS44MTMuODU2LS40NDkgMC0uODEzLS4zODMtLjgxMy0uODU2di0xLjAwN2MwLS40NzMuMzY0LS44NTcuODEzLS44NTdaIiBmaWxsPSIjNEYxMTBGIj48L3BhdGg+CiAgPHBhdGggZD0iTTguNTAyIDE1LjM0NWEuNTQuNTQgMCAwIDAtLjcwNS4xMi42MDYuNjA2IDAgMCAwLS4xMzEuNDAzLjc5Ni43OTYgMCAwIDAgLjA0Mi4yMjNjLjAzOC4xMTYuMTAxLjIzMi4xNzUuMzQuMTUxLjIyLjM4OC40NjYuNzE5LjY5NS42NjguNDYgMS43MjYuODU4IDMuMjg5Ljg1OCAxLjUzIDAgMi41ODctLjI4MyAzLjI5MS0uNjgyLjY5NC0uMzk0IDEuMDgtLjkyNyAxLjE0OC0xLjQxOGEuNTQuNTQgMCAwIDAtLjgyLS41NGMtLjEzLjA4LS41LjIwNS0xLjE0NC4zMDUtLjYxOC4wOTYtMS40MjQuMTYtMi4zNjUuMTYtLjk0MiAwLTEuNzQ1LS4wNjQtMi4zNi0uMTYtLjY0Mi0uMS0xLjAxLS4yMjQtMS4xNC0uMzA0WiIgZmlsbD0iI2ZmZiI+PC9wYXRoPgogIDxwYXRoIGQ9Ik0xNi4zODUgMTQuODk3YTEuMDgzIDEuMDgzIDAgMCAwLTEuMTU4LS4wMThjLS4wNTkuMDMzLS4zNDQuMTM4LS45NDYuMjMxLS40NS4wNy0xLjIxMy4xNTMtMi4yODIuMTUzLTEuMDY3IDAtMS44MjgtLjA4My0yLjI3Ny0uMTUyLS41OTYtLjA5My0uODgtLjE5OC0uOTQtLjIzMmExLjA4NCAxLjA4NCAwIDAgMC0xLjQwNy4yNDIgMS4xNTQgMS4xNTQgMCAwIDAtLjI1Mi43NjVjLjAwNC4xMjIuMDI3LjI0OC4wNjkuMzc2LjA1Mi4xNTguMTM0LjMxOC4yNDMuNDc3LjIwNi4zLjUwMy41ODkuODU4LjgzNC42MzIuNDM2IDEuNzY3Ljk1NCAzLjU5Ni45NTQgMS40ODEgMCAyLjY3OC0uMjUzIDMuNTU4LS43NTMuODAzLS40NTYgMS4zMi0xLjExNyAxLjQxOC0xLjgxNWExLjA5NCAxLjA5NCAwIDAgMC0uNDgtMS4wNjJabS03Ljk4OSAxLjAwMS0uMTgtLjA5LjE4LjA5Wm02LjUxOC45M2MtLjcwNS40LTEuNzUxLjYxMS0zLjAyNS42MTEtMS41NSAwLTIuNDc3LS40MTUtMi45ODItLjc2M2EyLjIxNCAyLjIxNCAwIDAgMS0uNTgtLjU1NC44MzUuODM1IDAgMCAxLS4xMDctLjIwMy4yMDIuMjAyIDAgMCAxLS4wMDQtLjExMmMuMzIuMTk4Ljk3Ny4zMjIgMS4zNC4zNzkuNy4xMDggMS41NDQuMTY1IDIuNDQzLjE2NS45IDAgMS43NDctLjA1NyAyLjQ0Ny0uMTY1LjM2NS0uMDU3IDEuMDI2LS4xOCAxLjM0Ni0uMzc5LS4wNS4zNTUtLjM3OC43MzYtLjg3OCAxLjAyWiIgZmlsbD0iIzdDNDAyRiI+PC9wYXRoPgogIDxwYXRoIGQ9Ik0xMy44OTcgMTAuMzEzYy4xNSAwIC4yNy4xMjIuMjcuMjcydi41NDRhLjI3Mi4yNzIgMCAxIDEtLjU0MSAwdi0uNTQ0YzAtLjE1LjEyMS0uMjcyLjI3LS4yNzJaTTkuNTYxIDEwLjMxM2MuMTUgMCAuMjcuMTIyLjI3LjI3MnYuNTQ0YS4yNzEuMjcxIDAgMSAxLS41NDEgMHYtLjU0NGMwLS4xNS4xMjEtLjI3Mi4yNzEtLjI3MloiIGZpbGw9IiNmZmYiPjwvcGF0aD4KPC9zdmc+Cg==",
         poop_s: "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNiAxNiI+CiAgPHBhdGggZD0iTTguNzQ5IDIuNTZjLjMwNiAxLjIwOC0uNjE4IDEuNTUtMS4yNzcgMS41ODRINy4yNWMtMS4yNCAwLTIuMjQ3Ljk5My0yLjI0NyAyLjIxOXYuMDJhMi4yMjEgMi4yMjEgMCAwIDAtMS40OTkgMi4wOTJjMCAuMjQyLjA0LjQ3NS4xMTIuNjkzYTIuMjIgMi4yMiAwIDAgMC0xLjM5NiAyLjA1NGMwIDEuMjI1IDEuMDA2IDIuMjE4IDIuMjQ4IDIuMjE4aDcuMDY0YzEuMjQxIDAgMi4yNDgtLjk5MyAyLjI0OC0yLjIxOGEyLjIyIDIuMjIgMCAwIDAtMS4zOTYtMi4wNTRjLjA3Mi0uMjE4LjExMS0uNDUuMTExLS42OTMgMC0xLjA0My0uNzMtMS45MTgtMS43MTMtMi4xNTUgMC0uMDIyIDAtLjA0NS0uMDAyLS4wNjcuNDU4LTEuMzIyLS40LTMuMzE0LTIuMDMxLTMuNjkzWiIgZmlsbD0iI0E1NUQ0OSI+PC9wYXRoPgogIDxwYXRoIGQ9Ik02LjU1NCA2LjU1Yy41OTkgMCAxLjA4NC40ODYgMS4wODQgMS4wODd2LjcyNWMwIC42MDEtLjQ4NSAxLjA4OC0xLjA4NCAxLjA4OGExLjA4NiAxLjA4NiAwIDAgMS0xLjA4My0xLjA4OHYtLjcyNWMwLS42LjQ4NS0xLjA4OCAxLjA4My0xLjA4OFoiIGZpbGw9IiNmZmYiPjwvcGF0aD4KICA8cGF0aCBkPSJNNi41NTUgNy4wOTRjLjI5OSAwIC41NDEuMjU1LjU0MS41N3YuNjcyYzAgLjMxNS0uMjQyLjU3LS41NDEuNTctLjMgMC0uNTQyLS4yNTUtLjU0Mi0uNTd2LS42NzFjMC0uMzE2LjI0Mi0uNTcxLjU0Mi0uNTcxWiIgZmlsbD0iIzRGMTEwRiI+PC9wYXRoPgogIDxwYXRoIGQ9Ik05LjQ0NCA2LjU1Yy41OTkgMCAxLjA4NC40ODYgMS4wODQgMS4wODd2LjcyNWMwIC42MDEtLjQ4NSAxLjA4OC0xLjA4NCAxLjA4OEExLjA4NiAxLjA4NiAwIDAgMSA4LjM2IDguMzYydi0uNzI1YzAtLjYuNDg2LTEuMDg4IDEuMDg0LTEuMDg4WiIgZmlsbD0iI2ZmZiI+PC9wYXRoPgogIDxwYXRoIGQ9Ik05LjQ0NCA3LjA5NGMuMyAwIC41NDIuMjU1LjU0Mi41N3YuNjcyYzAgLjMxNS0uMjQzLjU3LS41NDIuNTctLjMgMC0uNTQyLS4yNTUtLjU0Mi0uNTd2LS42NzFjMC0uMzE2LjI0My0uNTcxLjU0Mi0uNTcxWiIgZmlsbD0iIzRGMTEwRiI+PC9wYXRoPgogIDxwYXRoIGQ9Ik01LjY2OCAxMC4yM2EuMzYuMzYgMCAwIDAtLjQ3LjA4LjQwNC40MDQgMCAwIDAtLjA4Ny4yNjkuNTMuNTMgMCAwIDAgLjAyNy4xNDguOTI1LjkyNSAwIDAgMCAuMTE4LjIyN2MuMS4xNDcuMjU4LjMxLjQ3OS40NjMuNDQ1LjMwOCAxLjE1LjU3MiAyLjE5Mi41NzIgMS4wMiAwIDEuNzI1LS4xODggMi4xOTQtLjQ1NS40NjMtLjI2Mi43Mi0uNjE4Ljc2Ni0uOTQ1YS4zNi4zNiAwIDAgMC0uNTQ3LS4zNmMtLjA4Ni4wNTQtLjMzMy4xMzctLjc2My4yMDQtLjQxMi4wNjMtLjk0OS4xMDYtMS41NzcuMTA2LS42MjcgMC0xLjE2My0uMDQzLTEuNTczLS4xMDYtLjQyOC0uMDY3LS42NzMtLjE1LS43Ni0uMjAzWiIgZmlsbD0iI2ZmZiI+PC9wYXRoPgogIDxwYXRoIGQ9Ik0xMC45MjMgOS45MzFhLjcyMi43MjIgMCAwIDAtLjc3MS0uMDEyYy0uMDQuMDIyLS4yMy4wOTMtLjYzMS4xNTQtLjMuMDQ3LS44MDkuMTAyLTEuNTIyLjEwMi0uNzExIDAtMS4yMTgtLjA1NS0xLjUxNy0uMTAxLS4zOTgtLjA2Mi0uNTg3LS4xMzItLjYyNy0uMTU0YS43MjIuNzIyIDAgMCAwLS45MzguMTYuNzcuNzcgMCAwIDAtLjE2OS41MS44OTYuODk2IDAgMCAwIC4wNDcuMjUxYy4wMzUuMTA1LjA5LjIxMi4xNjIuMzE4LjEzNy4yLjMzNS4zOTMuNTcyLjU1Ni40Mi4yOSAxLjE3OC42MzYgMi4zOTcuNjM2Ljk4NyAwIDEuNzg2LS4xNjggMi4zNzItLjUwMi41MzYtLjMwMy44OC0uNzQ1Ljk0NS0xLjIxYS43My43MyAwIDAgMC0uMzItLjcwOFptLTUuMzI1LjY2OC0uMTItLjA2LS4wMDEtLjAwMS4xMi4wNnptNC4zNDUuNjE5Yy0uNDcuMjY3LTEuMTY4LjQwOC0yLjAxNy40MDgtMS4wMzQgMC0xLjY1Mi0uMjc2LTEuOTg4LS41MDhhMS40NzcgMS40NzcgMCAwIDEtLjM4Ni0uMzcuNTU1LjU1NSAwIDAgMS0uMDcyLS4xMzUuMTM0LjEzNCAwIDAgMS0uMDAzLS4wNzVjLjIxMy4xMzIuNjUyLjIxNS44OTQuMjUyLjQ2Ni4wNzMgMS4wMjkuMTEgMS42MjguMTEuNiAwIDEuMTY1LS4wMzcgMS42MzItLjExLjI0My0uMDM3LjY4My0uMTIuODk3LS4yNTItLjAzMy4yMzctLjI1Mi40OS0uNTg1LjY4WiIgZmlsbD0iIzdDNDAyRiI+PC9wYXRoPgogIDxwYXRoIGQ9Ik05LjI2NSA2Ljg3NWMuMSAwIC4xOC4wODEuMTguMTgydi4zNjJhLjE4MS4xODEgMCAxIDEtLjM2MSAwdi0uMzYyYzAtLjEuMDgtLjE4Mi4xOC0uMTgyWk02LjM3NCA2Ljg3NWMuMSAwIC4xOC4wODEuMTguMTgydi4zNjJhLjE4MS4xODEgMCAxIDEtLjM2IDB2LS4zNjJjMC0uMS4wOC0uMTgyLjE4LS4xODJaIiBmaWxsPSIjZmZmIj48L3BhdGg+Cjwvc3ZnPgo=",
@@ -53,7 +44,7 @@
                 });
             }
         }
-    } catch(e) { console.error("Notes_OldReact_Pikabu: Ошибка чтения базы", e); }
+    } catch(e) {}
 
     let colorDescs = {};
     try { colorDescs = JSON.parse(GM_getValue('pikabu_color_descs', '{}')); } catch(e) {}
@@ -83,7 +74,7 @@
         document.head.appendChild(styleSheet);
     }
 
-    function openNoteModal(username) {
+    function openNoteModal(username, fromAllNotes = false, currentSearch = '', currentFilters = []) {
         const existingModal = document.getElementById('custom-note-modal');
         if (existingModal) existingModal.remove();
         const existingOverlay = document.getElementById('custom-note-overlay');
@@ -225,7 +216,11 @@
         const cancelBtn = document.createElement('button');
         cancelBtn.textContent = 'Отмена';
         cancelBtn.style.cssText = 'padding: 5px 15px; cursor: pointer; background: #444; color: white; border: none; border-radius: 4px;';
-        cancelBtn.onclick = () => { modal.remove(); overlay.remove(); };
+        cancelBtn.onclick = () => {
+            modal.remove();
+            overlay.remove();
+            if (fromAllNotes) openAllNotesModal(currentSearch, currentFilters);
+        };
 
         const saveBtn = document.createElement('button');
         saveBtn.textContent = 'Сохранить заметку';
@@ -235,7 +230,9 @@
             if (db[username].colors.length === 0 && !db[username].notes && db[username].links.length === 0) delete db[username];
             saveDb();
             updateAllMarkers();
-            modal.remove(); overlay.remove();
+            modal.remove();
+            overlay.remove();
+            if (fromAllNotes) openAllNotesModal(currentSearch, currentFilters);
         };
 
         actionWrap.appendChild(cancelBtn);
@@ -245,10 +242,151 @@
         const overlay = document.createElement('div');
         overlay.id = 'custom-note-overlay';
         overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 99998;';
+        overlay.onclick = () => {
+            modal.remove();
+            overlay.remove();
+            if (fromAllNotes) openAllNotesModal(currentSearch, currentFilters);
+        };
+
+        document.body.appendChild(overlay);
+        document.body.appendChild(modal);
+    }
+
+    function openAllNotesModal(initialSearch = '', initialFilters = []) {
+        const existingModal = document.getElementById('all-notes-modal');
+        if (existingModal) existingModal.remove();
+        const existingOverlay = document.getElementById('all-notes-overlay');
+        if (existingOverlay) existingOverlay.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'all-notes-modal';
+        modal.style.cssText = `position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e1e1e; color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.8); z-index: 99999; width: 450px; height: 700px; font-family: Arial, sans-serif; border: 1px solid #444; display: flex; flex-direction: column; max-height: 90vh;`;
+
+        const header = document.createElement('h3');
+        header.textContent = `Все заметки`;
+        header.style.cssText = 'margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px; font-size: 18px;';
+        modal.appendChild(header);
+
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.placeholder = 'Поиск по нику...';
+        searchInput.value = initialSearch;
+        searchInput.style.cssText = 'width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #444; border-radius: 4px; background: #2a2a2a; color: #fff; font-size: 14px; box-sizing: border-box;';
+        modal.appendChild(searchInput);
+
+        let selectedFilterColors = [...initialFilters];
+        const filterWrap = document.createElement('div');
+        filterWrap.style.cssText = 'display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; padding: 8px; background: #252525; border-radius: 4px;';
+
+        const renderFilters = () => {
+            filterWrap.innerHTML = '<span style="font-size: 12px; color: #aaa; margin-right: 5px;">Фильтр по цветам:</span>';
+            Object.keys(COLORS).forEach(c => {
+                const isSelected = selectedFilterColors.includes(c);
+                const btn = document.createElement('div');
+                btn.style.cssText = `width: 20px; height: 20px; border-radius: 50%; cursor: pointer; background: ${COLORS[c]}; border: 2px solid ${isSelected ? '#fff' : 'transparent'}; box-sizing: border-box; transition: 0.2s;`;
+                btn.title = colorDescs[c] ? colorDescs[c] : c;
+                btn.onclick = () => {
+                    if (selectedFilterColors.includes(c)) {
+                        selectedFilterColors = selectedFilterColors.filter(color => color !== c);
+                    } else {
+                        selectedFilterColors.push(c);
+                    }
+                    renderFilters();
+                    renderList(searchInput.value);
+                };
+                filterWrap.appendChild(btn);
+            });
+        };
+        renderFilters();
+        modal.appendChild(filterWrap);
+
+        const listContainer = document.createElement('div');
+        listContainer.style.cssText = 'overflow-y: auto; flex-grow: 1; border: 1px solid #333; border-radius: 4px; background: #181818; padding: 5px;';
+        modal.appendChild(listContainer);
+
+        const actionWrap = document.createElement('div');
+        actionWrap.style.cssText = 'display: flex; justify-content: flex-end; margin-top: 15px;';
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Закрыть';
+        closeBtn.style.cssText = 'padding: 5px 15px; cursor: pointer; background: #444; color: white; border: none; border-radius: 4px;';
+        closeBtn.onclick = () => { modal.remove(); overlay.remove(); };
+        actionWrap.appendChild(closeBtn);
+        modal.appendChild(actionWrap);
+
+        const overlay = document.createElement('div');
+        overlay.id = 'all-notes-overlay';
+        overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 99998;';
         overlay.onclick = () => { modal.remove(); overlay.remove(); };
 
         document.body.appendChild(overlay);
         document.body.appendChild(modal);
+
+        const renderList = (filterText = '') => {
+            listContainer.innerHTML = '';
+            const users = Object.keys(db).filter(u => {
+                if (!u.toLowerCase().includes(filterText.toLowerCase())) return false;
+                if (selectedFilterColors.length > 0) {
+                    const userData = db[u];
+                    const userColors = userData.colors || [];
+                    return userColors.some(c => selectedFilterColors.includes(c));
+                }
+                return true;
+            }).sort((a, b) => a.localeCompare(b));
+
+            if (users.length === 0) {
+                listContainer.innerHTML = '<div style="color: #666; text-align: center; padding: 20px;">Пользователи не найдены</div>';
+                return;
+            }
+
+            users.forEach(u => {
+                const userData = db[u];
+                const row = document.createElement('div');
+                row.style.cssText = 'display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #2a2a2a; transition: 0.2s;';
+                row.onmouseenter = () => row.style.background = '#2a2a2a';
+                row.onmouseleave = () => row.style.background = 'transparent';
+
+                const leftPart = document.createElement('div');
+                leftPart.style.cssText = 'display: flex; align-items: center; gap: 10px; overflow: hidden;';
+
+                const nameLink = document.createElement('a');
+                nameLink.href = `/@${u}`;
+                nameLink.target = '_blank';
+                nameLink.textContent = u;
+                nameLink.style.cssText = 'color: #3498db; text-decoration: none; font-weight: bold; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;';
+                leftPart.appendChild(nameLink);
+
+                const markersWrap = document.createElement('div');
+                markersWrap.style.cssText = 'display: flex; gap: 3px; align-items: center;';
+                if (userData.colors && userData.colors.length > 0) {
+                    userData.colors.forEach(c => {
+                        const dot = document.createElement('span');
+                        dot.style.cssText = `display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${COLORS[c]};`;
+                        dot.title = colorDescs[c] ? colorDescs[c] : c;
+                        markersWrap.appendChild(dot);
+                    });
+                }
+                leftPart.appendChild(markersWrap);
+                row.appendChild(leftPart);
+
+                const editBtn = document.createElement('button');
+                editBtn.innerHTML = '✏️';
+                editBtn.title = 'Редактировать заметку';
+                editBtn.style.cssText = 'background: none; border: none; cursor: pointer; font-size: 16px; padding: 0 5px; opacity: 0.7; transition: 0.2s;';
+                editBtn.onmouseenter = () => editBtn.style.opacity = '1';
+                editBtn.onmouseleave = () => editBtn.style.opacity = '0.7';
+                editBtn.onclick = () => {
+                    modal.remove();
+                    overlay.remove();
+                    openNoteModal(u, true, searchInput.value, selectedFilterColors);
+                };
+                row.appendChild(editBtn);
+                listContainer.appendChild(row);
+            });
+        };
+
+        renderList(searchInput.value);
+        searchInput.oninput = (e) => renderList(e.target.value);
     }
 
     function openGlobalSettings() {
@@ -259,15 +397,15 @@
 
         const modal = document.createElement('div');
         modal.id = 'custom-settings-modal';
-        modal.style.cssText = `position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e1e1e; color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.8); z-index: 99999; width: 300px; font-family: Arial, sans-serif; border: 1px solid #444;`;
+        modal.style.cssText = `position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e1e1e; color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.8); z-index: 99999; width: 380px; font-family: Arial, sans-serif; border: 1px solid #444;`;
 
         const header = document.createElement('h3');
         header.textContent = `Описания цветов`;
-        header.style.cssText = 'margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px; font-size: 16px;';
+        header.style.cssText = 'margin-top: 0; padding-bottom: 10px; font-size: 16px;';
         modal.appendChild(header);
 
         const descWrap = document.createElement('div');
-        descWrap.style.cssText = 'max-height: 300px; overflow-y: auto; margin-bottom: 15px;';
+        descWrap.style.cssText = 'max-height: 400px; overflow-y: auto; margin-bottom: 15px; padding-right: 5px;';
 
         Object.keys(COLORS).forEach(c => {
             const row = document.createElement('div');
@@ -287,17 +425,34 @@
         modal.appendChild(descWrap);
 
         const actionWrap = document.createElement('div');
-        actionWrap.style.cssText = 'display: flex; justify-content: flex-end; gap: 10px;';
+        actionWrap.style.cssText = 'display: flex; justify-content: space-between; align-items: center; gap: 10px;';
+
+        const allNotesBtn = document.createElement('button');
+        allNotesBtn.textContent = 'Все заметки';
+        allNotesBtn.style.cssText = 'padding: 5px 15px; cursor: pointer; background: #9b59b6; color: white; border: none; border-radius: 4px; font-weight: bold;';
+        allNotesBtn.onclick = () => {
+            modal.remove(); overlay.remove();
+            openAllNotesModal();
+        };
+
+        const rightButtons = document.createElement('div');
+        rightButtons.style.cssText = 'display: flex; gap: 10px;';
+
         const cancelBtn = document.createElement('button');
         cancelBtn.textContent = 'Отмена';
         cancelBtn.style.cssText = 'padding: 5px 15px; cursor: pointer; background: #444; color: white; border: none; border-radius: 4px;';
         cancelBtn.onclick = () => { modal.remove(); overlay.remove(); };
+
         const saveBtn = document.createElement('button');
         saveBtn.textContent = 'Сохранить';
         saveBtn.style.cssText = 'padding: 5px 15px; cursor: pointer; background: #2ecc71; color: white; border: none; border-radius: 4px; font-weight: bold;';
         saveBtn.onclick = () => { saveColorDescs(); updateAllMarkers(); modal.remove(); overlay.remove(); };
-        actionWrap.appendChild(cancelBtn);
-        actionWrap.appendChild(saveBtn);
+
+        rightButtons.appendChild(cancelBtn);
+        rightButtons.appendChild(saveBtn);
+
+        actionWrap.appendChild(allNotesBtn);
+        actionWrap.appendChild(rightButtons);
         modal.appendChild(actionWrap);
 
         const overlay = document.createElement('div');
@@ -355,10 +510,8 @@
     }
 
     function updateAllMarkers() {
-        //Очищаем страницу от всех старых маркеров
         document.querySelectorAll('.custom-user-marker').forEach(el => el.remove());
 
-        //Комментарии
         document.querySelectorAll('.comment__user').forEach(el => {
             let username = el.getAttribute('data-name');
             const nickEl = el.querySelector('.user__nick');
@@ -377,7 +530,6 @@
             }
         });
 
-        //Посты
         document.querySelectorAll('.story__user-link, .story__author').forEach(el => {
             let username = el.getAttribute('data-name');
             if (!username) {
@@ -390,7 +542,6 @@
             if (marker) { el.after(marker); }
         });
 
-        //Страница профиля
         const profileHeader = document.querySelector('.profile__nick');
         if (profileHeader) {
              let username = window.location.href.split('@')[1]?.split('/')[0]?.split('?')[0];
