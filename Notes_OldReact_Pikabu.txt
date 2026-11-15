@@ -355,10 +355,10 @@
     }
 
     function updateAllMarkers() {
-        // 1. Очищаем страницу от всех старых маркеров
+        //Очищаем страницу от всех старых маркеров
         document.querySelectorAll('.custom-user-marker').forEach(el => el.remove());
 
-        // 2. Комментарии
+        //Комментарии
         document.querySelectorAll('.comment__user').forEach(el => {
             let username = el.getAttribute('data-name');
             const nickEl = el.querySelector('.user__nick');
@@ -377,7 +377,7 @@
             }
         });
 
-        // 3. Посты
+        //Посты
         document.querySelectorAll('.story__user-link, .story__author').forEach(el => {
             let username = el.getAttribute('data-name');
             if (!username) {
@@ -390,7 +390,7 @@
             if (marker) { el.after(marker); }
         });
 
-        // 4. Страница профиля
+        //Страница профиля
         const profileHeader = document.querySelector('.profile__nick');
         if (profileHeader) {
              let username = window.location.href.split('@')[1]?.split('/')[0]?.split('?')[0];
